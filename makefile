@@ -12,9 +12,9 @@ OBJS = obj/*
 CC = mpic++
 
 # Precompiled libraries to link in:
-LDLIBS  = -L/usr/lib/openmpi/lib -L/usr/lib -lm -ljpeg -lmpi
+LDLIBS  = -L/usr/lib/openmpi/lib -L/home/caleb/Documents/EEE4120F/Prac3/jpeg-6b/.libs/ -lm -lmpi -ljpeg
 # Included H files needed during compiling:
-INCLUDE = -ITools -I/usr/lib/openmpi/include
+INCLUDE = -ITools -I/usr/lib/openmpi/include -Ijpeg-6b
 
 .PHONY: clean Prac3 run
 all:    clean Prac3 run
@@ -22,7 +22,7 @@ all:    clean Prac3 run
 clean:
 	rm -f -r $(PROG) $(OBJS)
 
-Prac4:
+Prac3:
 	$(CC) $(INCLUDE) -c Prac3.cpp -o obj/Prac3.o
 	$(CC) $(INCLUDE) -c Tools/JPEG.cpp -o obj/JPEG.o
 	$(CC) $(INCLUDE) -c Tools/Timer.cpp -o obj/Timer.o
@@ -30,7 +30,7 @@ Prac4:
 
 # you can type "make run" to execute the program in this case with a default of 5 nodes
 run:
-	mpirun -np 4 bin/Prac3
+	mpirun -np 5 bin/Prac3
 
 doxy: Prac3.cpp
 	doxygen Prac3.doxy
