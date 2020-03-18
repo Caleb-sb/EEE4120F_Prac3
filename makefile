@@ -12,7 +12,7 @@ OBJS = obj/*
 CC = mpic++
 
 # Precompiled libraries to link in:
-LDLIBS  = -L/usr/lib/openmpi/lib -L/home/caleb/Documents/EEE4120F/Prac3/jpeg-6b/.libs/ -lm -lmpi -ljpeg
+LDLIBS  = -L/usr/lib/openmpi/lib -L/home/mikedupi/Documents/EEE4120F/Prac3/jpeg-6b/.libs/ -lm -lmpi -ljpeg
 # Included H files needed during compiling:
 INCLUDE = -ITools -I/usr/lib/openmpi/include -Ijpeg-6b
 
