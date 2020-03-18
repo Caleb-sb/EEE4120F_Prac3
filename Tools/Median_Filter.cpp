@@ -39,4 +39,37 @@ int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX,
   }
 
 
+
+}
+
+double find_median_func(int list[], int list_length)
+{
+
+  int temp; // temporary variable to hold int value when swapping
+
+  // Sort array - using bubble sort algorithm
+  for(int i = 0; i < list_length - 1; i ++)
+  {
+    for(int j = 0; j < list_length - 1 - i; j ++)
+    {
+      if( list[j] > list[j+1])
+       {
+         // swap the elements
+         temp = list[j];
+         list[j] = list[j+1];
+         list[j+1] = temp;
+       }
+    }
+  }
+  // Now list is sorted
+  if (list_length % 2 == 0) // if list length is even
+  {
+    // find average value between two centre values
+    return ((double)(list[(list_length / 2) - 1] + list[(list_length / 2)]) / 2);
+  } else // if list length is odd
+  {
+    // centre value = list length / 2 (without remainder)
+    return (list[int(list_length / 2)];
+  }
+
 }
