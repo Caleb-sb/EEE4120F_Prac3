@@ -36,8 +36,21 @@ int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX,
         {
           for(int insideX = 0; insideX < windowSizeX; insideX ++)
           {
-
-            tempList[counter] = input[y + insideY][x + insideX];
+            if ((boundaryCond == 2) & ((y + insideY) > (inputSizeY - 1))) // caters for boundaryCond == 2
+            {
+              newY = (y + insideY) - (inputSizeY);
+            } else
+            {
+              newY = y + insideY;
+            }
+            if ((boundaryCond == 2) & ((x + insideX) > (inputSizeX - 1))) // caters for boundaryCond == 2
+            {
+              newX = (x + insideX) - (inputSizeX);
+            } else
+            {
+              newX = x + insideX;
+            }
+            tempList[counter] = input[newY][newX];
             counter ++ ;
           }
         }
