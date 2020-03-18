@@ -36,19 +36,31 @@ int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX,
         {
           for(int insideX = 0; insideX < windowSizeX; insideX ++)
           {
-            if ((boundaryCond == 2) & ((y + insideY) > (inputSizeY - 1))) // caters for boundaryCond == 2
-            {
-              newY = (y + insideY) - (inputSizeY);
-            } else
-            {
-              newY = y + insideY;
-            }
-            if ((boundaryCond == 2) & ((x + insideX) > (inputSizeX - 1))) // caters for boundaryCond == 2
-            {
-              newX = (x + insideX) - (inputSizeX);
-            } else
-            {
+            if (boundaryCond == 3 ) // shrinking window
+            { // below represent how much the window is hanging over the edge, at Zero -> it is touching the edge
+              // ((y + insideY) - (inputSizeY - 1)) // how much it has gone over
+              // Therefore, we are only interested when above is greater than zero, we then limit windowSizeX in order
+              // to shrink the window
+              if(((x + insideX) - (inputSizeX - 1)) > 0) {windowSizeX = windowSizeX --;} // untested
+              if(((y + insideY) - (inputSizeY - 1)) > 0) {windowSizeY = windowSizeY --;} // untested
               newX = x + insideX;
+              newY = y + insideY;
+            } else
+            {
+              if ((boundaryCond == 2) & ((y + insideY) > (inputSizeY - 1))) // caters for boundaryCond == 2
+              {
+                newY = (y + insideY) - (inputSizeY);
+              } else
+              {
+                newY = y + insideY;
+              }
+              if ((boundaryCond == 2) & ((x + insideX) > (inputSizeX - 1))) // caters for boundaryCond == 2
+              {
+                newX = (x + insideX) - (inputSizeX);
+              } else
+              {
+                newX = x + insideX;
+              }
             }
             tempList[counter] = input[newY][newX];
             counter ++ ;
