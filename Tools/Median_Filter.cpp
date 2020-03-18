@@ -26,15 +26,26 @@ int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX,
       int tempList[windowSizeY*windowSizeX]; // temp list to hold matrix items
       int counter = 0; // counter used to itterate through tempList
       // now add matrix items to list:
+
+      if ((boundaryCond == 0 ) & ((x > (inputSizeX - windowSizeX)) || (y > (inputSizeY - windowSizeY))))
+      { // approaching edge of boundary for ignore boundary case
+        output[y][x] = input[y][x];
+      } else
+      {
         for(int insideY = 0; insideY < windowSizeY; insideY ++)
         {
           for(int insideX = 0; insideX < windowSizeX; insideX ++)
           {
+
             tempList[counter] = input[y + insideY][x + insideX];
             counter ++ ;
           }
         }
-        //input[y][x] =
+        // find median in that selection block - this method is using
+        // top-left-corner. This means that the top left corner of a
+        // block gets the median value of the block
+        output[y][x] = find_median_func(tempList, counter);
+      }
     }
   }
 
