@@ -1,6 +1,14 @@
 // EEE4120F - Prac 3 - Median_Filter.cpp
 // DPRMIC007 & BRDCAL003
 
+// Notes for improvements / innovations
+// .. Try average instead of median - might improve results when window size is larger
+// .. Test implementation on paper with different boudary conditions
+// .. Fix syntax errors - maybe edit pramatrised matrix - functions can only return a single
+//    value so best choice is to edit parameter variable
+// .. Make adjustments to windowing so that the corresponding x,y coordinates that are set
+//    are placed in the cetre of the window and not on the top-left-corner
+
 int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX, int windowSizeY, int boundaryCond)
 {
   // boundaryCond: 0 = ignore(without cropping), 1 = ignore(with cropping). 2 = wrap, 3 = shrink window
@@ -73,8 +81,6 @@ int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX,
       }
     }
   }
-
-
 
 }
 
