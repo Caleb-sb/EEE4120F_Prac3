@@ -49,6 +49,7 @@
 
 // Includes needed for the program
 #include "Prac3.h"
+using namespace std;
 
 /** This is the master node function, describing the operations
     that the master will be doing */
@@ -86,16 +87,39 @@ void Master () {
 
  // This is example code of how to copy image files ----------------------------
  printf("Start of example code...\n");
- for(j = 0; j < 10; j++){
+ int window_y = 9;
+ int window_x = 9;
+ int divisor  = window_y*window_x;
+ int window [3][divisor];
+ int counter  = 0;
+ int colcheck =0;
+// for(j = 0; j < 10; j++){
   tic();
   int x, y;
-  for(y = 0; y < Input.Height; y++){
-   for(x = 0; x < Input.Width*Input.Components; x++){
-    Output.Rows[y][x] = Input.Rows[y][x];
+  for(y = int(window_y/2); y < Input.Height-int(window_y/2); y++){
+
+   for(x = int(window_x/2)*Input.Components; x < Input.Width*Input.Components-int(window_x/2)*Input.Components; x=x+3){
+
+     int sum = 0;
+     for(int j = -int(window_y/2); j<int(window_y/2)+1; j++){
+       for(int i = -int(window_x/2)*Input.Components; i<int(window_x/2)*Input.Components+1*Input.Components; i=i+3){
+         window[0][counter] = Input.Rows[y+j][x+i];
+         window[1][counter] = Input.Rows[y+j][x+i+1];
+         window[2][counter] = Input.Rows[y+j][x+i+2];
+         counter++;
+       }
+     }
+     sort(window[0], window[0]+sizeof(window[0])/sizeof(window[0][0]));
+     sort(window[1], window[1]+sizeof(window[1])/sizeof(window[1][0]));
+     sort(window[2], window[2]+sizeof(window[2])/sizeof(window[2][0]));
+     Output.Rows[y][x] = window[0][int(counter/2)];
+     Output.Rows[y][x+1] = window[1][int(counter/2)];
+     Output.Rows[y][x+2] = window[2][int(counter/2)];
+     counter =0;
    }
   }
   printf("Time = %lg ms\n", (double)toc()/1e-3);
- }
+ //}
  printf("End of example code...\n\n");
  // End of example -------------------------------------------------------------
 
