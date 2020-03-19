@@ -56,14 +56,42 @@ using namespace std;
 void Master () {
  //! <h3>Local vars</h3>
  // The above outputs a heading to doxygen function entry
+ if(!Input.Read("Data/greatwall.jpg")){
+  printf("Cannot read image\n");
+  return;
+ }
+
+ // Allocated RAM for the output image
+ if(!Output.Allocate(Input.Width, Input.Height, Input.Components)) return;
+
+ //Splitting up the processing as evenly as possible
+ int mod_check = Input.Height % (numprocs-1);
+ int y_portions[numprocs-1];          //! y_portion: Rows to send to each slave
+ if (mod_check != 0){
+   for (int i = 0; i<numprocs-1; i++){
+     if (mod_check > 0){
+       y_portion[i] = int(Input.Height/(numprocs-1)) + 1;
+       mod_check--;
+     }
+     y_portion[i] = int(Input.Height/(numprocs-1))
+     mod_check--;
+   }
+ }
+ else y_portion = Height/(numprocs-1);
+
  int  j;             //! j: Loop counter
- char buff[BUFSIZE]; //! buff: Buffer for transferring message data
+ char buff[BUFSIZE][BUFSIZE]; //! buff: Buffer for transferring message data
  MPI_Status stat;    //! stat: Status of the MPI application
 
- // Start of "Hello World" example..............................................
+ //TODO: Make a loop to fill up an array of 2D Arrays
+
+ //TODO: Make a loop to send each 2D array to the slaves
+
+ //TODO: Make a loop to receive all the values back from the slaves (Output)
+
+
  printf("0: We have %d processors\n", numprocs);
  for(j = 1; j < numprocs; j++) {
-  sprintf(buff, "Hello %d! ", j);
   MPI_Send(buff, BUFSIZE, MPI_CHAR, j, TAG, MPI_COMM_WORLD);
  }
  for(j = 1; j < numprocs; j++) {
@@ -77,24 +105,52 @@ void Master () {
  // End of "Hello World" example................................................
 
  // Read the input image
- if(!Input.Read("Data/greatwall.jpg")){
-  printf("Cannot read image\n");
-  return;
- }
 
- // Allocated RAM for the output image
- if(!Output.Allocate(Input.Width, Input.Height, Input.Components)) return;
 
  // This is example code of how to copy image files ----------------------------
  printf("Start of example code...\n");
- int window_y = 3;
- int window_x = 3;
- int divisor  = window_y*window_x;
- int window [3][divisor];
- int counter  = 0;
- int colcheck =0;
-// for(j = 0; j < 10; j++){
-  tic();
+
+ tic();
+
+ printf("Time = %lg ms\n", (double)toc()/1e-3);
+ //}
+ printf("End of example code...\n\n");
+ // End of example -------------------------------------------------------------
+
+ // Write the output image
+ if(!Output.Write("Data/Output.jpg")){
+  printf("Cannot write image\n");
+  return;
+ }
+ //! <h3>Output</h3> The file Output.jpg will be created on success to save
+ //! the processed output.
+}
+//------------------------------------------------------------------------------
+
+/** This is the Slave function, the workers of this MPI application. */
+void Slave(int ID){
+
+ char idstr[32];
+ char buff [BUFSIZE][BUFSIZE];
+
+ MPI_Status stat;
+
+ // receive from rank 0 (master):
+ // This is a blocking receive, which is typical for slaves.
+ MPI_Recv(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD, &stat);
+
+ strncat(buff, idstr, BUFSIZE-1);
+ strncat(buff, "reporting for duty", BUFSIZE-1);
+
+  //TODO: Create array to insert completed values into
+  // Start of Distributed Median
+  printf("Start of example code...\n");
+  int window_y = 3;
+  int window_x = 3;
+  int divisor  = window_y*window_x;
+  int window [3][divisor];
+  int counter  = 0;
+  int colcheck =0;
   int x, y;
   for(y = int(window_y/2); y < Input.Height-int(window_y/2); y++){
 
@@ -118,39 +174,10 @@ void Master () {
      counter =0;
    }
   }
-  printf("Time = %lg ms\n", (double)toc()/1e-3);
- //}
- printf("End of example code...\n\n");
- // End of example -------------------------------------------------------------
 
- // Write the output image
- if(!Output.Write("Data/Output.jpg")){
-  printf("Cannot write image\n");
-  return;
- }
- //! <h3>Output</h3> The file Output.jpg will be created on success to save
- //! the processed output.
-}
-//------------------------------------------------------------------------------
-
-/** This is the Slave function, the workers of this MPI application. */
-void Slave(int ID){
- // Start of "Hello World" example..............................................
- char idstr[32];
- char buff [BUFSIZE];
-
- MPI_Status stat;
-
- // receive from rank 0 (master):
- // This is a blocking receive, which is typical for slaves.
- MPI_Recv(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD, &stat);
- sprintf(idstr, "Processor %d ", ID);
- strncat(buff, idstr, BUFSIZE-1);
- strncat(buff, "reporting for duty", BUFSIZE-1);
-
- // send to rank 0 (master):
- MPI_Send(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
- // End of "Hello World" example................................................
+  //TODO: Send the "output" array back to master
+  // send to rank 0 (master):
+  MPI_Send(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
 }
 //------------------------------------------------------------------------------
 
