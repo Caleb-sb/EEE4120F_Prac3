@@ -9,10 +9,16 @@
 // .. Make adjustments to windowing so that the corresponding x,y coordinates that are set
 //    are placed in the cetre of the window and not on the top-left-corner
 
-int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX, int windowSizeY, int boundaryCond)
-{
+void median_filter_func (int **input, int **output, int xSize, int ySize, int windowSizeX, int windowSizeY, int boundaryCond)
+{ // Must pass 'output' array in order to use edited values
   // boundaryCond: 0 = ignore(without cropping), 1 = ignore(with cropping). 2 = wrap, 3 = shrink window
 
+  // Declaring Local Variables
+  int inputSizeX;
+  int inputSizeY;
+
+  int newX;
+  int newY;
   // Setting up output array
   if(boundaryCond == 1)
   {
@@ -24,7 +30,7 @@ int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX,
     inputSizeY = ySize;
   }
 
-  int output [inputSizeX][inputSizeY];
+  output [inputSizeX][inputSizeY];
 
 
   for(int y = 0; y < inputSizeY; y ++)
@@ -82,7 +88,7 @@ int[][] median_filter_func (int input[][],int xSize, int ySize, int windowSizeX,
     }
   }
 
-}
+} // end of median_filter_func
 
 double find_median_func(int list[], int list_length)
 {
@@ -111,7 +117,7 @@ double find_median_func(int list[], int list_length)
   } else // if list length is odd
   {
     // centre value = list length / 2 (without remainder)
-    return (list[int(list_length / 2)];
+    return (list[int(list_length / 2)]);
   }
 
 }
