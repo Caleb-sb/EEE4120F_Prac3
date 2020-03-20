@@ -9,6 +9,40 @@
 // .. Make adjustments to windowing so that the corresponding x,y coordinates that are set
 //    are placed in the cetre of the window and not on the top-left-corner
 
+int find_median_func(int list[], int list_length)
+{
+  // return type = int because pixel colours are int values, even though median can be a double
+  // it will be casted down to an int.
+
+  int temp; // temporary variable to hold int value when swapping
+
+  // Sort array - using bubble sort algorithm
+  for(int i = 0; i < list_length - 1; i ++)
+  {
+    for(int j = 0; j < list_length - 1 - i; j ++)
+    {
+      if( list[j] > list[j+1])
+       {
+         // swap the elements
+         temp = list[j];
+         list[j] = list[j+1];
+         list[j+1] = temp;
+       }
+    }
+  }
+  // Now list is sorted
+  if (list_length % 2 == 0) // if list length is even
+  {
+    // find average value between two centre values
+    return ((list[(list_length / 2) - 1] + list[(list_length / 2)]) / 2);
+  } else // if list length is odd
+  {
+    // centre value = list length / 2 (without remainder)
+    return (list[int(list_length / 2)]);
+  }
+
+} // end of find_median_func
+
 void median_filter_func (int **input, int **output, int xSize, int ySize, int windowSizeX, int windowSizeY, int boundaryCond)
 { // Must pass 'output' array in order to use edited values
   // boundaryCond: 0 = ignore(without cropping), 1 = ignore(with cropping). 2 = wrap, 3 = shrink window
@@ -89,35 +123,3 @@ void median_filter_func (int **input, int **output, int xSize, int ySize, int wi
   }
 
 } // end of median_filter_func
-
-double find_median_func(int list[], int list_length)
-{
-
-  int temp; // temporary variable to hold int value when swapping
-
-  // Sort array - using bubble sort algorithm
-  for(int i = 0; i < list_length - 1; i ++)
-  {
-    for(int j = 0; j < list_length - 1 - i; j ++)
-    {
-      if( list[j] > list[j+1])
-       {
-         // swap the elements
-         temp = list[j];
-         list[j] = list[j+1];
-         list[j+1] = temp;
-       }
-    }
-  }
-  // Now list is sorted
-  if (list_length % 2 == 0) // if list length is even
-  {
-    // find average value between two centre values
-    return ((double)(list[(list_length / 2) - 1] + list[(list_length / 2)]) / 2);
-  } else // if list length is odd
-  {
-    // centre value = list length / 2 (without remainder)
-    return (list[int(list_length / 2)]);
-  }
-
-}
