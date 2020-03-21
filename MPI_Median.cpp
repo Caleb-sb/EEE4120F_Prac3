@@ -99,9 +99,9 @@ void Master () {
  //Telling slaves what to expect
  int  j;             //! j: Loop counter
  for(j = 1; j < numprocs; j++) {
-  int dimensions[2] = {y_portions[j-1] , Input.Width*Input.Components};
-  MPI_Send(dimensions, 2, MPI_INT, j, TAG, MPI_COMM_WORLD);
-  MPI_Recv(dimensions, 2, MPI_INT, j, TAG, MPI_COMM_WORLD, &stat);
+  int dimensions[3] = {y_portions[j-1] , Input.Width*Input.Components, Input.Components};
+  MPI_Send(dimensions, 3, MPI_INT, j, TAG, MPI_COMM_WORLD);
+  MPI_Recv(dimensions, 3, MPI_INT, j, TAG, MPI_COMM_WORLD, &stat);
   printf("Process %d received a height of %d and length of %d pixels (RGB)\n", j, dimensions[0], dimensions[1]/3);
  }
  printf("\n");
@@ -130,21 +130,27 @@ void Master () {
  }
  //printf("Waiting for slavery to be abolished...\n");
  indexer= 0;
- for(j = 1; j < numprocs; j++) {
+ int flag =0;
+ boolean done =false;
+ int counter = 0;
+ for (j=1; j<numprocs; j++) {
   // This is blocking: normally one would use MPI_Iprobe, with MPI_ANY_SOURCE,
-  // to check for messages, and only when there is a message, receive it
-  // with MPI_Recv.  This would let the master receive messages from any
-  // slave, instead of a specific one only.
+  counter =0;
   MPI_Recv(slave, y_portions[j-1]*Input.Width*Input.Components, MPI_CHAR, j, TAG, MPI_COMM_WORLD, &stat);
-  printf("%d per cent complete\n", (j-1)*100/(numprocs-1));
+
+  printf("%d per cent complete\n", (j)*100/(numprocs-1));
   for(int y = 0; y < y_portions[j-1]; y++){
+    if (j > 1 && y ==0){
+      indexer += y_portions[j-2];
+      printf("%d\n", indexer);
+    }
     for(int x = 0; x < Input.Width*Input.Components; x++){
-      if (j > 1 && y ==0){
-        indexer += y_portions[j-2];
-      }
+
       Output.Rows[y+indexer][x] = slave[y][x];
+      counter++;
     }
   }
+  printf("%d\n", counter);
 }
 
  tic();
@@ -168,7 +174,7 @@ void Master () {
 void Slave(int ID){
 
  char idstr[32];
- int dimensions[2];
+ int dimensions[3];
  char buff[BUFSIZE];
  MPI_Status stat;
  unsigned char ack =0;
@@ -176,50 +182,56 @@ void Slave(int ID){
 
  // receive from rank 0 (master):
  // This is a blocking receive, which is typical for slaves.
- MPI_Recv(dimensions, 2, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+ MPI_Recv(dimensions, 3, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
  unsigned char input_arr[dimensions[0]][dimensions[1]];
  unsigned char out_arr[dimensions[0]][dimensions[1]];
- MPI_Send(dimensions, 2, MPI_INT, 0, TAG, MPI_COMM_WORLD);
+ MPI_Send(dimensions, 3, MPI_INT, 0, TAG, MPI_COMM_WORLD);
 
  //Do these return? For use with ACK/NACK
  MPI_Recv(input_arr, dimensions[0]*dimensions[1], MPI_CHAR, 0, TAG, MPI_COMM_WORLD, &stat);
  ack = 1;
  MPI_Send(&ack, 1, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
+
+
   // Start of Distributed Median
-  int window_y = 3;
-  int window_x = 3;
-  int divisor  = window_y*window_x;
-  int window [3][divisor];
-  int counter  = 0;
-  int colcheck =0;
-  int x, y;
-  
-  for(y = int(window_y/2); y < Input.Height-int(window_y/2); y++){
+ int window_y = 3;
+ int window_x = 3;
+ int divisor  = window_y*window_x;
+ int window [3][divisor];
+ int counter  = 0;
+ int colcheck =0;
 
-   for(x = int(window_x/2)*Input.Components; x < Input.Width*Input.Components-int(window_x/2)*Input.Components; x=x+3){
+ int x, y;
 
-     int sum = 0;
-     for(int j = -int(window_y/2); j<int(window_y/2)+1; j++){
-       for(int i = -int(window_x/2)*Input.Components; i<int(window_x/2)*Input.Components+1*Input.Components; i=i+3){
-         window[0][counter] = Input.Rows[y+j][x+i];
-         window[1][counter] = Input.Rows[y+j][x+i+1];
-         window[2][counter] = Input.Rows[y+j][x+i+2];
-         counter++;
-       }
-     }
-     sort(window[0], window[0]+sizeof(window[0])/sizeof(window[0][0]));
-     sort(window[1], window[1]+sizeof(window[1])/sizeof(window[1][0]));
-     sort(window[2], window[2]+sizeof(window[2])/sizeof(window[2][0]));
-     out_arr[y][x] = window[0][int(counter/2)];
-     out_arr[y][x+1] = window[1][int(counter/2)];
-     out_arr[y][x+2] = window[2][int(counter/2)];
-     counter =0;
+
+
+ for(y = int(window_y/2); y < dimensions[0]-int(window_y/2); y++){
+   //printf("Hello %d\n", ID);
+   for(x = int(window_x/2)*dimensions[2]; x < dimensions[1]-int(window_x/2)*dimensions[2]; x=x+dimensions[2]){
+     //printf("Hello %d\n", ID);
+    int sum = 0;
+    for(int j = -int(window_y/2); j<int(window_y/2)+1; j++){
+      //printf("Hello %d\n", ID);
+      for(int i = -int(window_x/2)*dimensions[2]; i<int(window_x/2)*dimensions[2]+1*dimensions[2]; i=i+dimensions[2]){
+        //printf("Hello %d\n", ID);
+        window[0][counter] = input_arr[y+j][x+i];
+        window[1][counter] = input_arr[y+j][x+i+1];
+        window[2][counter] = input_arr[y+j][x+i+2];
+        counter++;
+      }
+    }
+    sort(window[0], window[0]+sizeof(window[0])/sizeof(window[0][0]));
+    sort(window[1], window[1]+sizeof(window[1])/sizeof(window[1][0]));
+    sort(window[2], window[2]+sizeof(window[2])/sizeof(window[2][0]));
+    out_arr[y][x] = window[0][int(counter/2)];
+    out_arr[y][x+1] = window[1][int(counter/2)];
+    out_arr[y][x+2] = window[2][int(counter/2)];
+    counter =0;
+    //printf("Help me I want to die\n");
    }
   }
+  MPI_Send(out_arr, dimensions[0]*dimensions[1], MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
 
-  //TODO: Send the "output" array back to master
-  // send to rank 0 (master):
-  //MPI_Send(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
 }
 //------------------------------------------------------------------------------
 
