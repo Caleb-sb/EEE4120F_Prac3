@@ -38,6 +38,9 @@
 
 #define BUFSIZE 128
 #define TAG       0
+#define WINDOW_X  3
+#define WINDOW_Y  3
+#define DIMS      3
 //------------------------------------------------------------------------------
 
 // MPI House-keeping
@@ -47,8 +50,6 @@ int numprocs;
 // Input and output buffers
 JPEG Input;
 JPEG Output;
-
-int y_portions[2];
 //------------------------------------------------------------------------------
 
 void Master();       // This is the "main" process (rank 0)
