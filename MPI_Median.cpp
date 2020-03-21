@@ -132,7 +132,7 @@ void Master () {
  indexer= 0;
  int flag =0;
  boolean done =false;
- int counter = 0;
+ //int counter = 0;
  for (j=1; j<numprocs; j++) {
   // This is blocking: normally one would use MPI_Iprobe, with MPI_ANY_SOURCE,
   counter =0;
@@ -142,15 +142,14 @@ void Master () {
   for(int y = 0; y < y_portions[j-1]; y++){
     if (j > 1 && y ==0){
       indexer += y_portions[j-2];
-      printf("%d\n", indexer);
     }
     for(int x = 0; x < Input.Width*Input.Components; x++){
 
       Output.Rows[y+indexer][x] = slave[y][x];
-      counter++;
+      //counter++;
     }
   }
-  printf("%d\n", counter);
+  //printf("%d\n", counter);
 }
 
  tic();
