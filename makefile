@@ -24,13 +24,14 @@ clean:
 
 Prac3:
 	$(CC) $(INCLUDE) -c Prac3.cpp -o obj/Prac3.o
+	$(CC) $(INCLUDE) -c MPI_Median.cpp -o obj/MPI_Median.o
 	$(CC) $(INCLUDE) -c Tools/JPEG.cpp -o obj/JPEG.o
 	$(CC) $(INCLUDE) -c Tools/Timer.cpp -o obj/Timer.o
-	$(CC) -o bin/Prac3 obj/Prac3.o obj/JPEG.o obj/Timer.o $(LDLIBS)
+	$(CC) -o bin/MPI_Median obj/MPI_Median.o obj/JPEG.o obj/Timer.o $(LDLIBS)
 
 # you can type "make run" to execute the program in this case with a default of 5 nodes
 run:
-	mpirun -np 5 bin/Prac3
+	mpirun -np 5 bin/MPI_Median
 
 doxy: Prac3.cpp
 	doxygen Prac3.doxy

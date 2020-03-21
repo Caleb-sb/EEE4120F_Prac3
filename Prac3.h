@@ -47,6 +47,8 @@ int numprocs;
 // Input and output buffers
 JPEG Input;
 JPEG Output;
+
+int y_portions[2];
 //------------------------------------------------------------------------------
 
 void Master();       // This is the "main" process (rank 0)

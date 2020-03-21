@@ -56,6 +56,8 @@ using namespace std;
 void Master () {
  //! <h3>Local vars</h3>
  // The above outputs a heading to doxygen function entry
+
+ // Read the input image
  if(!Input.Read("Data/greatwall.jpg")){
   printf("Cannot read image\n");
   return;
@@ -66,49 +68,84 @@ void Master () {
 
  //Splitting up the processing as evenly as possible
  int mod_check = Input.Height % (numprocs-1);
- int y_portions[numprocs-1];          //! y_portion: Rows to send to each slave
- if (mod_check != 0){
-   for (int i = 0; i<numprocs-1; i++){
-     if (mod_check > 0){
-       y_portion[i] = int(Input.Height/(numprocs-1)) + 1;
-       mod_check--;
+ int y_portions[numprocs-1];          //! y_portions: Rows to send to each slave
+
+ for (int i = 0; i<numprocs-1; i++){
+    if (mod_check > 0){
+      y_portions[i] = int(Input.Height/(numprocs-1)) + 1;
+      mod_check--;
+    }
+    else y_portions[i] = int(Input.Height/(numprocs-1));
+ }
+
+//unsigned char *buffer = (unsigned char*) malloc((numprocs-1)*y_portions[0]*(Input.Width*Input.Components)*sizeof(unsigned char));
+ // Using pointers to use malloc (Array is too large)
+ //unsigned char ***pointy = (unsigned char***)malloc((numprocs-1)*sizeof(unsigned char**));
+ //unsigned char **row = (unsigned char**)malloc((y_portions[0])* sizeof(unsigned char*));
+ //unsigned char *cols = (unsigned char*)malloc((Input.Width*Input.Components)*sizeof(unsigned char));
+
+ /*// Nested for loops to assign memory and values (won't fit on stack)
+ int indexer = 0;   //! indexer: Sets the j to appropriate value for splitting
+ for (int proc = 0; proc < numprocs-1; proc++){
+     if(proc > 0){
+       indexer = indexer + y_portions[proc-1]; //TODO: If the last j is unassigned make it -1
      }
-     y_portion[i] = int(Input.Height/(numprocs-1))
-     mod_check--;
+     copy(Input.Rows[0][0], Input.Rows[indexer][0], pointy[proc]);
    }
- }
- else y_portion = Height/(numprocs-1);
+*/
 
+ MPI_Status stat; //! stat: Status of the MPI application
+ boolean ack = false;
+ //Telling slaves what to expect
  int  j;             //! j: Loop counter
- char buff[BUFSIZE][BUFSIZE]; //! buff: Buffer for transferring message data
- MPI_Status stat;    //! stat: Status of the MPI application
-
- //TODO: Make a loop to fill up an array of 2D Arrays
-
- //TODO: Make a loop to send each 2D array to the slaves
-
- //TODO: Make a loop to receive all the values back from the slaves (Output)
-
-
- printf("0: We have %d processors\n", numprocs);
  for(j = 1; j < numprocs; j++) {
-  MPI_Send(buff, BUFSIZE, MPI_CHAR, j, TAG, MPI_COMM_WORLD);
+  int dimensions[2] = {y_portions[j-1] , Input.Width*Input.Components};
+  MPI_Send(dimensions, 2, MPI_INT, j, TAG, MPI_COMM_WORLD);
+  MPI_Recv(dimensions, 2, MPI_INT, j, TAG, MPI_COMM_WORLD, &stat);
+  printf("Process %d received a height of %d and length of %d pixels (RGB)\n", j, dimensions[0], dimensions[1]/3);
  }
+ printf("\n");
+
+ unsigned char slave [y_portions[0]][Input.Width*Input.Components];
+
+ int indexer = 0;
+ for (int proc = 0; proc < numprocs-1; proc++){
+   for(int j = 0; j < y_portions[proc]; j++){
+     if(proc > 0 && j ==0){
+       indexer = indexer + y_portions[proc-1]; //TODO: If the last j is unassigned make it -1
+     }
+     for (int i =0; i < Input.Width*Input.Components; i++){
+       slave[j][i] = Input.Rows[j+indexer][i];
+     }
+   }
+
+   //TODO: Send to slave
+   int size = sizeof(unsigned char)*y_portions[proc]*Input.Width*Input.Components;
+   MPI_Send(slave, size, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD);
+   MPI_Recv(&ack, 1, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD, &stat);
+   if (ack){
+     printf("Data partition %d successful\n", proc+1);
+   }
+
+ }
+ //printf("Waiting for slavery to be abolished...\n");
+ indexer= 0;
  for(j = 1; j < numprocs; j++) {
   // This is blocking: normally one would use MPI_Iprobe, with MPI_ANY_SOURCE,
   // to check for messages, and only when there is a message, receive it
   // with MPI_Recv.  This would let the master receive messages from any
   // slave, instead of a specific one only.
-  MPI_Recv(buff, BUFSIZE, MPI_CHAR, j, TAG, MPI_COMM_WORLD, &stat);
-  printf("0: %s\n", buff);
- }
- // End of "Hello World" example................................................
-
- // Read the input image
-
-
- // This is example code of how to copy image files ----------------------------
- printf("Start of example code...\n");
+  MPI_Recv(slave, y_portions[j-1]*Input.Width*Input.Components, MPI_CHAR, j, TAG, MPI_COMM_WORLD, &stat);
+  printf("%d per cent complete\n", (j-1)*100/(numprocs-1));
+  for(int y = 0; y < y_portions[j-1]; y++){
+    for(int x = 0; x < Input.Width*Input.Components; x++){
+      if (j > 1 && y ==0){
+        indexer += y_portions[j-2];
+      }
+      Output.Rows[y+indexer][x] = slave[y][x];
+    }
+  }
+}
 
  tic();
 
@@ -131,20 +168,24 @@ void Master () {
 void Slave(int ID){
 
  char idstr[32];
- char buff [BUFSIZE][BUFSIZE];
-
+ int dimensions[2];
+ char buff[BUFSIZE];
  MPI_Status stat;
+ unsigned char ack =0;
+
 
  // receive from rank 0 (master):
  // This is a blocking receive, which is typical for slaves.
- MPI_Recv(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD, &stat);
+ MPI_Recv(dimensions, 2, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+ unsigned char input_arr[dimensions[0]][dimensions[1]];
+ unsigned char out_arr[dimensions[0]][dimensions[1]];
+ MPI_Send(dimensions, 2, MPI_INT, 0, TAG, MPI_COMM_WORLD);
 
- strncat(buff, idstr, BUFSIZE-1);
- strncat(buff, "reporting for duty", BUFSIZE-1);
-
-  //TODO: Create array to insert completed values into
+ //Do these return? For use with ACK/NACK
+ MPI_Recv(input_arr, dimensions[0]*dimensions[1], MPI_CHAR, 0, TAG, MPI_COMM_WORLD, &stat);
+ ack = 1;
+ MPI_Send(&ack, 1, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
   // Start of Distributed Median
-  printf("Start of example code...\n");
   int window_y = 3;
   int window_x = 3;
   int divisor  = window_y*window_x;
@@ -152,6 +193,7 @@ void Slave(int ID){
   int counter  = 0;
   int colcheck =0;
   int x, y;
+  
   for(y = int(window_y/2); y < Input.Height-int(window_y/2); y++){
 
    for(x = int(window_x/2)*Input.Components; x < Input.Width*Input.Components-int(window_x/2)*Input.Components; x=x+3){
@@ -168,16 +210,16 @@ void Slave(int ID){
      sort(window[0], window[0]+sizeof(window[0])/sizeof(window[0][0]));
      sort(window[1], window[1]+sizeof(window[1])/sizeof(window[1][0]));
      sort(window[2], window[2]+sizeof(window[2])/sizeof(window[2][0]));
-     Output.Rows[y][x] = window[0][int(counter/2)];
-     Output.Rows[y][x+1] = window[1][int(counter/2)];
-     Output.Rows[y][x+2] = window[2][int(counter/2)];
+     out_arr[y][x] = window[0][int(counter/2)];
+     out_arr[y][x+1] = window[1][int(counter/2)];
+     out_arr[y][x+2] = window[2][int(counter/2)];
      counter =0;
    }
   }
 
   //TODO: Send the "output" array back to master
   // send to rank 0 (master):
-  MPI_Send(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
+  //MPI_Send(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
 }
 //------------------------------------------------------------------------------
 
