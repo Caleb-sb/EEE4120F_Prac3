@@ -59,7 +59,7 @@ void Master ()
   // The above outputs a heading to doxygen function entry
 
   // Read the input image
-  if(!Input.Read("Data/greatwall.jpg"))
+  if(!Input.Read("Data/baby.jpg"))
   {
     printf("Cannot read image\n");
     return;
