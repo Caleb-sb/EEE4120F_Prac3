@@ -76,82 +76,123 @@ void Master ()
   {
     if (mod_check > 0)
     {
-      y_portions[i] = int(Input.Height/(numprocs-1)) + 1;
+
+      if(i==(numprocs-2) || i ==0)
+      {
+        y_portions[i] = int(Input.Height/(numprocs-1)) + 1 + (int)WINDOW_Y/2;
+      }
+      else
+        y_portions[i] = int(Input.Height/(numprocs-1)) + 1 + 2*((int)WINDOW_Y/2);
+
       mod_check--;
     }
-    else y_portions[i] = int(Input.Height/(numprocs-1));
+    else
+    {
+      if (i==(numprocs-2) || i ==0)
+      {
+        y_portions[i] = int(Input.Height/(numprocs-1)) + (int)WINDOW_Y/2;
+      }
+      else
+        y_portions[i] = int(Input.Height/(numprocs-1)) + 2*((int)WINDOW_Y/2);
+    }
   }
 
   MPI_Status stat; //! stat: Status of the MPI application
   boolean ack = false;
   //Telling slaves what to expect
   int  j;             //! j: Loop counter
+  int largest = 0;
   for(j = 1; j < numprocs; j++)
   {
     int dimensions[DIMS] = {y_portions[j-1] , Input.Width*Input.Components, Input.Components};
+    if (y_portions[j-1] > largest){
+        largest = y_portions[j-1];
+    }
     MPI_Send(dimensions, DIMS, MPI_INT, j, TAG, MPI_COMM_WORLD);
     MPI_Recv(dimensions, DIMS, MPI_INT, j, TAG, MPI_COMM_WORLD, &stat);
     printf("Process %d received a height of %d and length of %d pixels\n", j, dimensions[0], dimensions[1]/Input.Components);
   }
   printf("\n");
 
-  unsigned char slave [y_portions[0]][Input.Width*Input.Components];
 
   int indexer = 0;
+
   for (int proc = 0; proc < numprocs-1; proc++)
   {
+    unsigned char slave [y_portions[proc]][Input.Width*Input.Components];
     for(int j = 0; j < y_portions[proc]; j++)
     {
       if(proc > 0 && j ==0)
-      {
-        indexer = indexer + y_portions[proc-1]; //TODO: If the last j is unassigned make it -1
-      }
-      for (int i =0; i < Input.Width*Input.Components; i++)
-      {
-        slave[j][i] = Input.Rows[j+indexer][i];
-      }
-    }
+        indexer = indexer + y_portions[proc-1] - 2*(WINDOW_Y/2);//TODO: If the last j is unassigned make it -1
 
-    //TODO: Send to slave
+      for (int i =0; i < Input.Width*Input.Components; i++)
+        slave[j][i] = Input.Rows[j+indexer][i];
+    }
+    printf("Indexer: %d\n", indexer);
+
     int size = sizeof(unsigned char)*y_portions[proc]*Input.Width*Input.Components;
     MPI_Send(slave, size, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD);
     MPI_Recv(&ack, 1, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD, &stat);
     if (ack)
-    {
       printf("Data partition %d successful\n", proc+1);
-    }
-
   }
-  //printf("Waiting for slavery to be abolished...\n");
+  // Last array not working
+  // Size size chnaged, getting the values back might be an issue
+  // to output
   indexer= 0;
   int flag =0;
   boolean done =false;
-  //int counter = 0;
+  tic();
+
   for (j=1; j<numprocs; j++)
   {
-  // This is blocking: normally one would use MPI_Iprobe, with MPI_ANY_SOURCE,
-
+    unsigned char slave [y_portions[j-1]][Input.Width*Input.Components];
+    // This is blocking: normally one would use MPI_Iprobe, with MPI_ANY_SOURCE,
     MPI_Recv(slave, y_portions[j-1]*Input.Width*Input.Components, MPI_CHAR, j, TAG, MPI_COMM_WORLD, &stat);
-
     printf("%d per cent complete\n", (j)*100/(numprocs-1));
+/*
     for(int y = 0; y < y_portions[j-1]; y++)
     {
       if (j > 1 && y ==0)
-      {
         indexer += y_portions[j-2];
-      }
+
       for(int x = 0; x < Input.Width*Input.Components; x++)
-      {
         Output.Rows[y+indexer][x] = slave[y][x];
+    }
+*/
+    if (j==1)
+    {
+      for(int y = 0; y < y_portions[j-1]- (int)WINDOW_Y/2; y++)
+      {
+        for(int x = 0; x < Input.Width*Input.Components; x++)
+          Output.Rows[y][x] = slave[y][x];
+      }
+    }
+    else if(j==numprocs-1)
+    {
+      for(int y = (int)WINDOW_Y/2; y < y_portions[j-1]; y++)
+      {
+        if (j > 1 && y == (int)WINDOW_Y/2)
+          indexer += y_portions[j-2]-WINDOW_Y;
+
+        for(int x = 0; x < Input.Width*Input.Components; x++)
+          Output.Rows[y+indexer][x] = slave[y][x];
+      }
+    }
+    else{
+      for(int y = (int)WINDOW_Y/2; y < y_portions[j-1]- (int)WINDOW_Y/2; y++)
+      {
+        if (j > 1 && y ==(int)WINDOW_Y/2)
+          indexer += y_portions[j-2]-WINDOW_Y;
+
+        for(int x = 0; x < Input.Width*Input.Components; x++)
+          Output.Rows[y+indexer][x] = slave[y][x];
       }
     }
     //printf("%d\n", counter);
   }
-  tic();
-
   printf("Time = %lg ms\n", (double)toc()/1e-3);
-
-  printf("End of example code...\n\n");
+  printf("Writing JPEG...\n\n");
 
 
   // Write the output image
@@ -175,7 +216,6 @@ void Slave(int ID)
   MPI_Status stat;
   unsigned char ack =0;
 
-
   // receive from rank 0 (master):
   // This is a blocking receive, which is typical for slaves.
   MPI_Recv(dimensions, 3, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
@@ -188,7 +228,6 @@ void Slave(int ID)
   ack = 1;
   MPI_Send(&ack, 1, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
 
-
   // Start of Distributed Median
   int window_y = WINDOW_Y;
   int window_x = WINDOW_X;
@@ -196,24 +235,19 @@ void Slave(int ID)
   int window [dimensions[2]][divisor];
   int counter  = 0;
   int colcheck =0;
-
   int x, y;
-
-
 
   for(y = int(window_y/2); y < dimensions[0]-int(window_y/2); y++)
   {
-    //printf("Hello %d\n", ID);
+
     for(x = int(window_x/2)*dimensions[2]; x < dimensions[1]-int(window_x/2)*dimensions[2]; x=x+dimensions[2])
     {
-      //printf("Hello %d\n", ID);
+
       int sum = 0;
       for(int j = -int(window_y/2); j<int(window_y/2)+1; j++)
       {
-        //printf("Hello %d\n", ID);
         for(int i = -int(window_x/2)*dimensions[2]; i<int(window_x/2)*dimensions[2]+1*dimensions[2]; i=i+dimensions[2])
         {
-          //printf("Hello %d\n", ID);
           for (int colour = 0; colour < dimensions[2]; colour++)
           {
             window[colour][counter] = input_arr[y+j][x+i+colour];
@@ -222,20 +256,16 @@ void Slave(int ID)
         }
       }
       for (int colour = 0; colour < dimensions[2]; colour++)
-      {
         sort(window[colour], window[colour]+sizeof(window[colour])/sizeof(window[colour][0]));
-      }
+
       for (int colour = 0; colour < dimensions[2]; colour++)
-      {
         out_arr[y][x+colour] = window[colour][int(counter/2)];
-      }
-          
+
       counter =0;
       //printf("Help me I want to die\n");
     }
   }
   MPI_Send(out_arr, dimensions[0]*dimensions[1], MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
-
 }
 //------------------------------------------------------------------------------
 
