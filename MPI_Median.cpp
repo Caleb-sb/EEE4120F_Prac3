@@ -55,6 +55,7 @@ using namespace std;
 that the master will be doing */
 void Master ()
 {
+  numprocs = 3; // setting numprocs
   //! <h3>Local vars</h3>
   // The above outputs a heading to doxygen function entry
 
@@ -102,8 +103,29 @@ void Master ()
   //Telling slaves what to expect
   int  j;             //! j: Loop counter
   int largest = 0;
+  int total = 0;
   for(j = 1; j < numprocs; j++)
   {
+    // ---
+    // Trying to fix issue where height allocations aren't done correctly
+    total = total + y_portions[j-1];
+    if ((total > Input.Height) && (j == (numprocs-1)))
+    {
+      y_portions[j-1] = Input.Height - (total - y_portions[j-1]);
+    } // Issue of misallocation is solved (allocation no longer
+      // exceeds max value (Input.Height) but isn't even distribution,
+      // this is more of an overflow exemption)
+
+      // Still having issues using numprocs != 5
+        // numprocs < 5 over-allocate y-dimensions
+        // numprocs > 5 under-allocate y-dimensions (next if statement will sort that)
+      if ((total < Input.Height) && (j == (numprocs-1)))
+      {
+        y_portions[j-1] = (Input.Height - total) + y_portions[j-1];
+      }
+
+    // ---
+
     int dimensions[DIMS] = {y_portions[j-1] , Input.Width*Input.Components, Input.Components};
     if (y_portions[j-1] > largest){
         largest = y_portions[j-1];
@@ -299,6 +321,7 @@ void Slave(int ID)
 
       counter =0;
       //printf("Help me I want to die\n");
+      //  hahahahaha, i felt the same coding this shit
     }
   }
   MPI_Send(out_arr, dimensions[0]*dimensions[1], MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
