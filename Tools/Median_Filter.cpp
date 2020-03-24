@@ -95,14 +95,14 @@ void median_filter_func (int **input, int **output, int xSize, int ySize, int wi
               newY = y + insideY;
             } else
             {
-              if ((boundaryCond == 2) & ((y + insideY) > (inputSizeY - 1))) // caters for boundaryCond == 2
+              if ((boundaryCond == 2) && ((y + insideY) > (inputSizeY - 1))) // caters for boundaryCond == 2
               {
                 newY = (y + insideY) - (inputSizeY);
               } else
               {
                 newY = y + insideY;
               }
-              if ((boundaryCond == 2) & ((x + insideX) > (inputSizeX - 1))) // caters for boundaryCond == 2
+              if ((boundaryCond == 2) && ((x + insideX) > (inputSizeX - 1))) // caters for boundaryCond == 2
               {
                 newX = (x + insideX) - (inputSizeX);
               } else
