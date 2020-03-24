@@ -122,13 +122,14 @@ void Master ()
     unsigned char slave [y_portions[proc]][Input.Width*Input.Components];
     for(int j = 0; j < y_portions[proc]; j++)
     {
+
       if(proc > 0 && j ==0)
         indexer = indexer + y_portions[proc-1] - 2*(WINDOW_Y/2);//TODO: If the last j is unassigned make it -1
-
       for (int i =0; i < Input.Width*Input.Components; i++)
         slave[j][i] = Input.Rows[j+indexer][i];
+
     }
-    printf("Indexer: %d\n", indexer);
+    
 
     int size = sizeof(unsigned char)*y_portions[proc]*Input.Width*Input.Components;
     MPI_Send(slave, size, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD);
@@ -173,23 +174,24 @@ void Master ()
       for(int y = (int)WINDOW_Y/2; y < y_portions[j-1]; y++)
       {
         if (j > 1 && y == (int)WINDOW_Y/2)
-          indexer += y_portions[j-2]-WINDOW_Y;
+          indexer += y_portions[j-2]-WINDOW_Y+WINDOW_Y/2;
 
         for(int x = 0; x < Input.Width*Input.Components; x++)
           Output.Rows[y+indexer][x] = slave[y][x];
+
+
       }
     }
     else{
       for(int y = (int)WINDOW_Y/2; y < y_portions[j-1]- (int)WINDOW_Y/2; y++)
       {
         if (j > 1 && y ==(int)WINDOW_Y/2)
-          indexer += y_portions[j-2]-WINDOW_Y;
+          indexer += y_portions[j-2]-WINDOW_Y+WINDOW_Y/2;
 
         for(int x = 0; x < Input.Width*Input.Components; x++)
           Output.Rows[y+indexer][x] = slave[y][x];
       }
     }
-    //printf("%d\n", counter);
   }
   printf("Time = %lg ms\n", (double)toc()/1e-3);
   printf("Writing JPEG...\n\n");
@@ -237,10 +239,10 @@ void Slave(int ID)
   int colcheck =0;
   int x, y;
 
-  for(y = int(window_y/2); y < dimensions[0]-int(window_y/2); y++)
+  for(y = 0; y < dimensions[0]; y++)
   {
 
-    for(x = int(window_x/2)*dimensions[2]; x < dimensions[1]-int(window_x/2)*dimensions[2]; x=x+dimensions[2])
+    for(x = 0; x < dimensions[1]; x=x+dimensions[2])
     {
 
       int sum = 0;
@@ -250,7 +252,40 @@ void Slave(int ID)
         {
           for (int colour = 0; colour < dimensions[2]; colour++)
           {
-            window[colour][counter] = input_arr[y+j][x+i+colour];
+            // Checking if window is at edge (top or left)
+            if (y+j > -1 && (x+i+colour)>-1 && (x+i+colour) < dimensions[1] && y+j < dimensions[0])
+            {
+              window[colour][counter] = input_arr[y+j][x+i+colour];
+            }
+            else if (y+j < 0)
+            {
+              if ((x+i+colour)<0)
+              {
+                window[colour][counter] = input_arr[y+j+window_y][x+i+colour+window_x];
+              }
+              else
+                window[colour][counter] = input_arr[y+j+window_y][x+i+colour];
+            }
+            else if (y+j > -1 && (x+i+colour)<0)
+            {
+              window[colour][counter] = input_arr[y+j][x+i+colour+window_x];
+            }
+
+            // Checking if window is at edge (bottom or right)
+            else if (y+j >= dimensions[0])
+            {
+              if ((x+i+colour) >= dimensions[1])
+              {
+                window[colour][counter] = input_arr[y+j-window_y][x+i+colour-window_x];
+              }
+              else
+                window[colour][counter] = input_arr[y+j-window_y][x+i+colour];
+            }
+            else if (y+j < dimensions[0] && (x+i+colour) >= dimensions[1])
+            {
+              window[colour][counter] = input_arr[y+j][x+i+colour-window_x];
+            }
+
           }
           counter++;
         }
@@ -260,6 +295,7 @@ void Slave(int ID)
 
       for (int colour = 0; colour < dimensions[2]; colour++)
         out_arr[y][x+colour] = window[colour][int(counter/2)];
+
 
       counter =0;
       //printf("Help me I want to die\n");
