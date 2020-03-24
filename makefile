@@ -30,8 +30,12 @@ Prac3:
 	$(CC) -o bin/MPI_Median obj/MPI_Median.o obj/JPEG.o obj/Timer.o $(LDLIBS)
 
 # you can type "make run" to execute the program in this case with a default of 5 nodes
+#	mpirun -np 5 bin/MPI_Median
 run:
-	mpirun -np 5 bin/MPI_Median
+		for i in 1 2 3 4 5 ; do \
+			mpirun -np 5 bin/MPI_Median; \
+		done
+
 
 doxy: Prac3.cpp
 	doxygen Prac3.doxy

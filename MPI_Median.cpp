@@ -129,7 +129,7 @@ void Master ()
         slave[j][i] = Input.Rows[j+indexer][i];
 
     }
-    
+
 
     int size = sizeof(unsigned char)*y_portions[proc]*Input.Width*Input.Components;
     MPI_Send(slave, size, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD);
