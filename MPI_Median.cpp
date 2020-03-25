@@ -59,6 +59,7 @@ void Master ()
   // The above outputs a heading to doxygen function entry
 
   // Read the input image
+
   if(!Input.Read("Data/baby.jpg"))
   {
     printf("Cannot read image\n");
@@ -110,7 +111,7 @@ void Master ()
     }
     MPI_Send(dimensions, DIMS, MPI_INT, j, TAG, MPI_COMM_WORLD);
     MPI_Recv(dimensions, DIMS, MPI_INT, j, TAG, MPI_COMM_WORLD, &stat);
-    printf("Process %d received a height of %d and length of %d pixels\n", j, dimensions[0], dimensions[1]/Input.Components);
+    //printf("Process %d received a height of %d and length of %d pixels\n", j, dimensions[0], dimensions[1]/Input.Components);
   }
   printf("\n");
 
@@ -134,8 +135,8 @@ void Master ()
     int size = sizeof(unsigned char)*y_portions[proc]*Input.Width*Input.Components;
     MPI_Send(slave, size, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD);
     MPI_Recv(&ack, 1, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD, &stat);
-    if (ack)
-      printf("Data partition %d successful\n", proc+1);
+    //if (ack)
+      //printf("Data partition %d successful\n", proc+1);
   }
   // Last array not working
   // Size size chnaged, getting the values back might be an issue
@@ -150,7 +151,7 @@ void Master ()
     unsigned char slave [y_portions[j-1]][Input.Width*Input.Components];
     // This is blocking: normally one would use MPI_Iprobe, with MPI_ANY_SOURCE,
     MPI_Recv(slave, y_portions[j-1]*Input.Width*Input.Components, MPI_CHAR, j, TAG, MPI_COMM_WORLD, &stat);
-    printf("%d per cent complete\n", (j)*100/(numprocs-1));
+    //printf("%d per cent complete\n", (j)*100/(numprocs-1));
 /*
     for(int y = 0; y < y_portions[j-1]; y++)
     {
@@ -193,8 +194,9 @@ void Master ()
       }
     }
   }
-  printf("Time = %lg ms\n", (double)toc()/1e-3);
-  printf("Writing JPEG...\n\n");
+  //printf("Time = %lg ms\n", (double)toc()/1e-3);
+  printf("%lg\n", (double)toc()/1e-3);
+  //printf("Writing JPEG...\n\n");
 
 
   // Write the output image
@@ -211,9 +213,9 @@ void Master ()
 /** This is the Slave function, the workers of this MPI application. */
 void Slave(int ID)
 {
-
+  int winSize = 7; // median filter window size
   char idstr[32];
-  int dimensions[3];
+  int dimensions[winSize];
   char buff[BUFSIZE];
   MPI_Status stat;
   unsigned char ack =0;

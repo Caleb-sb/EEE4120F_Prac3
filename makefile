@@ -33,7 +33,7 @@ Prac3:
 #	mpirun -np 5 bin/MPI_Median
 run:
 		for i in 1 2 3 4 5 6 7 8 9 10; do \
-			mpirun -np 3 bin/MPI_Median; \
+			mpirun -np 6 bin/MPI_Median; \
 		done
 
 
