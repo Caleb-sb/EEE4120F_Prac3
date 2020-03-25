@@ -129,7 +129,7 @@ void Master ()
         slave[j][i] = Input.Rows[j+indexer][i];
 
     }
-    
+
 
     int size = sizeof(unsigned char)*y_portions[proc]*Input.Width*Input.Components;
     MPI_Send(slave, size, MPI_CHAR, proc+1, TAG, MPI_COMM_WORLD);
@@ -299,6 +299,7 @@ void Slave(int ID)
 
       counter =0;
       //printf("Help me I want to die\n");
+      //  hahahahaha, i felt the same coding this shit
     }
   }
   MPI_Send(out_arr, dimensions[0]*dimensions[1], MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
