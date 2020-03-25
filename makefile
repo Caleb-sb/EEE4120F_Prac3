@@ -30,7 +30,10 @@ Prac3:
 
 # you can type "make run" to execute the program in this case with a default of 5 nodes
 run:
-	mpirun -np 5 bin/Prac3
+	for i in 1 2 3 4 5 6 7 8 9 10; do \
+		mpirun -np 5 bin/Prac3; \
+	done
+
 
 doxy: Prac3.cpp
 	doxygen Prac3.doxy
