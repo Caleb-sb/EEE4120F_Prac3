@@ -27,13 +27,13 @@ Prac3:
 	$(CC) $(INCLUDE) -c MPI_Median.cpp -o obj/MPI_Median.o
 	$(CC) $(INCLUDE) -c Tools/JPEG.cpp -o obj/JPEG.o
 	$(CC) $(INCLUDE) -c Tools/Timer.cpp -o obj/Timer.o
-	$(CC) -o bin/MPI_Median obj/MPI_Median.o obj/JPEG.o obj/Timer.o $(LDLIBS)
-
+	$(CC)  -o bin/Prac3 obj/Prac3.o obj/JPEG.o obj/Timer.o $(LDLIBS)
+	# $(CC) -o bin/MPI_Median obj/MPI_Median.o obj/JPEG.o obj/Timer.o $(LDLIBS)
 # you can type "make run" to execute the program in this case with a default of 5 nodes
 #	mpirun -np 5 bin/MPI_Median
 run:
 		for i in 1 2 3 4 5 6 7 8 9 10; do \
-			mpirun -np 6 bin/MPI_Median; \
+			mpirun -np 6 bin/Prac3; \
 		done
 
 
