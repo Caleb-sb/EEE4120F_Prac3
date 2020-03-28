@@ -1,0 +1,80 @@
+\hypertarget{Prac3_8cpp}{}\section{Prac3.\+cpp File Reference}
+\label{Prac3_8cpp}\index{Prac3.\+cpp@{Prac3.\+cpp}}
+{\ttfamily \#include \char`\"{}Prac3.\+h\char`\"{}}\newline
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{Prac3_8cpp_ab43971159bedc8576304b4ec1c4567dc}{Master} ()
+\item 
+void \hyperlink{Prac3_8cpp_a3cdafe41bdc98a25ea63a3697c1edc84}{Slave} (int ID)
+\item 
+int \hyperlink{Prac3_8cpp_a3c04138a5bfe5d72780bb7e82a18e627}{main} (int argc, char $\ast$$\ast$argv)
+\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{Prac3_8cpp_a3c04138a5bfe5d72780bb7e82a18e627}\label{Prac3_8cpp_a3c04138a5bfe5d72780bb7e82a18e627}} 
+\index{Prac3.\+cpp@{Prac3.\+cpp}!main@{main}}
+\index{main@{main}!Prac3.\+cpp@{Prac3.\+cpp}}
+\subsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily int main (\begin{DoxyParamCaption}\item[{int}]{argc,  }\item[{char $\ast$$\ast$}]{argv }\end{DoxyParamCaption})}
+
+This is the entry point to the program. \mbox{\Hypertarget{Prac3_8cpp_ab43971159bedc8576304b4ec1c4567dc}\label{Prac3_8cpp_ab43971159bedc8576304b4ec1c4567dc}} 
+\index{Prac3.\+cpp@{Prac3.\+cpp}!Master@{Master}}
+\index{Master@{Master}!Prac3.\+cpp@{Prac3.\+cpp}}
+\subsubsection{\texorpdfstring{Master()}{Master()}}
+{\footnotesize\ttfamily void Master (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+This is the master node function, describing the operations that the master will be doing Master function first reads the input image then partions it evenly according to its size and the number of processes. It sends the slave processes the size of the array expected, gets an A\+CK message and then sends the array to be processed (also receiving and A\+CK). It receives the processed arrays and reassembles them into an Output.\+jpg
+
+\paragraph*{Input}
+
+Input image read in from /\+Data folder
+
+\paragraph*{Local Variables}
+
+stat\+: Status of the M\+PI application
+
+y\+\_\+portions\+: Rows to send to each slave
+
+ack\+: Slaves set true when array is received
+
+indexer\+: for aligning the Input and Output array with split arrays
+
+\paragraph*{Output}
+
+The file Output.\+jpg will be created on success to save the processed output. \mbox{\Hypertarget{Prac3_8cpp_a3cdafe41bdc98a25ea63a3697c1edc84}\label{Prac3_8cpp_a3cdafe41bdc98a25ea63a3697c1edc84}} 
+\index{Prac3.\+cpp@{Prac3.\+cpp}!Slave@{Slave}}
+\index{Slave@{Slave}!Prac3.\+cpp@{Prac3.\+cpp}}
+\subsubsection{\texorpdfstring{Slave()}{Slave()}}
+{\footnotesize\ttfamily void Slave (\begin{DoxyParamCaption}\item[{int}]{ID }\end{DoxyParamCaption})}
+
+This is the Slave function, the workers of this M\+PI application. \paragraph*{Input}
+
+Will first receive dimensions of incoming array, then the array itself \paragraph*{Output}
+
+Will first send A\+C\+Ks for the dimensions and the received array and then send the filtered array portion to the Master
+
+\paragraph*{Local variables}
+
+dimensions\mbox{[}\mbox{]}\+: Used to inform slave of incoming array dimensions
+
+stat\+: Status of the M\+PI application
+
+ack\+: Tells master array was received successfully
+
+input\+\_\+arr\+: array for slave to filter with median function
+
+out\+\_\+arr\+: array for slave to send to master after filtering
+
+window\+\_\+y\+: y-\/dimension of median window
+
+window\+\_\+x\+: x-\/dimension of median window
+
+elements\+: total num of items in window
+
+window\mbox{[}\mbox{]}\mbox{[}\mbox{]}\+: 2D for R\+GB
+
+counter\+: used to find columns of the same colour to find median
+
+x, y\+: iterating variables through array items 

@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
 //------------------------------------------------------------------------------
 
 #include "JPEG.h"
@@ -37,6 +38,9 @@
 
 #define BUFSIZE 128
 #define TAG       0
+#define WINDOW_X  3
+#define WINDOW_Y  3
+#define DIMS      3
 //------------------------------------------------------------------------------
 
 // MPI House-keeping

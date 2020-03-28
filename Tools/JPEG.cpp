@@ -104,13 +104,13 @@ bool JPEG::Read(const char* Filename){
  jpeg_start_decompress(&D_Struct);
 
  // Create a frame struct & buffers and fill in the blanks
- printf(
+ /*printf(
   "Opened \"%s\": width = %d, height = %d, c = %d\n",
   Filename,
   D_Struct.output_width,
   D_Struct.output_height,
   D_Struct.output_components
- );
+);*/
  if(!Allocate(
   D_Struct.output_width,
   D_Struct.output_height,
@@ -128,7 +128,7 @@ bool JPEG::Read(const char* Filename){
  // Release JPEG decompression object & file
  jpeg_destroy_decompress(&D_Struct);
  fclose(File);
- printf("File closed\n\n");
+ //printf("File closed\n\n");
 
  return true;
 }
